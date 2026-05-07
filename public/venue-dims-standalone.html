@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venue Dimensions Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #1a1d1e;
+  --panel-solid: #232729;
+  --border: #3a3f42;
+  --grid: #232729;
+  --grid-major: #2a3035;
+  --ink: #e2e6e8;
+  --ink-dim: #7a8892;
+  --accent: #4a9eff;
+  --accent-dim: #1e5fb8;
+  --warn: #f0a040;
+  --danger: #f05060;
+  --stage: #1c2c40;
+  --audience: #151a1c;
+  --foh: #18201e;
+  --backstage: #151e1c;
+  --ceiling: #f0a040;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #1a1d1e;
+  color: #e2e6e8;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* HEADER */
+header {
+  background: #232729;
+  border-bottom: 1px solid #3a3f42;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  gap: 4px;
+}
+
+.logo {
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #4a9eff;
+}
+.logo::before { content: "◈ "; color: #4a9eff; }
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.header-actions button {
+  background: #2b2f31;
+  border: 1px solid #3a3f42;
+  color: #7a8892;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.header-actions button:hover {
+  border-color: #4a5a65;
+  background: #333839;
+  color: #e2e6e8;
+}
+
+/* CANVAS AREA */
+.canvas-area {
+  background: #1a1d1e;
+  position: fixed;
+  top: 52px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.canvas-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 40px;
+}
+.canvas-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+.canvas-wrapper::-webkit-scrollbar-thumb { background: #3a3f42; border-radius: 4px; }
+
+#venue-svg {
+  background: #1a1d1e;
+  cursor: crosshair;
+}
+
+/* ASIDE / PANEL */
+aside {
+  position: fixed;
+  left: 0;
+  top: 52px;
+  width: 280px;
+  height: calc(100vh - 52px);
+  background: #232729;
+  border-right: 1px solid #3a3f42;
+  padding: 16px;
+  overflow-y: auto;
+  z-index: 90;
+}
+
+.section {
+  border-bottom: 1px solid #3a3f42;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  padding: 0;
+  margin-bottom: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #e2e6e8;
+  text-transform: uppercase;
+}
+
+.subsection-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #4a5a65;
+  border-bottom: 1px solid #3a3f42;
+  padding-bottom: 4px;
+  margin: 12px 0 6px;
+  text-transform: uppercase;
+}
+
+.field {
+  margin-bottom: 12px;
+}
+
+.field label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: #7a8892;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.field input, .field select {
+  width: 100%;
+  background: #1a1d1e;
+  border: 1px solid #3a3f42;
+  color: #e2e6e8;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 5px 8px;
+}
+.field input:focus, .field select:focus {
+  border-color: #4a9eff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(74,158,255,0.15);
+}
+
+/* CONTROLS */
+.zoom-controls {
+  position: fixed;
+  bottom: 40px;
+  left: 24px;
+  background: rgba(26,29,30,0.92);
+  border: 1px solid #3a3f42;
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  padding: 4px;
+  gap: 1px;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+.zoom-controls button {
+  background: transparent;
+  border: none;
+  color: #7a8892;
+  border-radius: 5px;
+  font-size: 13px;
+  padding: 4px 9px;
+  min-width: 28px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.zoom-controls button:hover { background: #333839; color: #e2e6e8; }
+
+.measure-controls {
+  position: fixed;
+  bottom: 40px;
+  right: 24px;
+  background: rgba(26,29,30,0.92);
+  border: 1px solid #3a3f42;
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  padding: 4px;
+  gap: 2px;
+  display: flex;
+  z-index: 100;
+}
+.measure-controls button {
+  background: transparent;
+  border: none;
+  color: #7a8892;
+  border-radius: 5px;
+  font-size: 10px;
+  font-family: 'Inter', sans-serif;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.measure-controls button:hover { background: #333839; color: #e2e6e8; }
+
+.compass {
+  position: fixed;
+  bottom: 40px;
+  right: 140px;
+  background: rgba(26,29,30,0.92);
+  border: 1px solid #3a3f42;
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  width: 54px;
+  height: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  color: #4a5a65;
+  z-index: 100;
+}
+.compass .arrow { color: #4a9eff; font-size: 20px; }
+
+.canvas-overlay {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(26,29,30,0.92);
+  border: 1px solid #3a3f42;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #7a8892;
+  padding: 7px 12px;
+  backdrop-filter: blur(8px);
+  letter-spacing: 0.3px;
+  z-index: 100;
+}
+.canvas-overlay span { color: #4a9eff; }
+
+.live-tip {
+  position: fixed;
+  background: #4a9eff;
+  color: white;
+  border-radius: 6px;
+  box-shadow: 0 3px 14px rgba(74,158,255,0.38);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  padding: 5px 10px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* FOOTER */
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #232729;
+  border-top: 1px solid #3a3f42;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #4a5a65;
+  padding: 0 14px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 100;
+}
+footer .stat { display: flex; gap: 5px; }
+footer .stat strong { color: #4a9eff; font-weight: 500; }
+
+/* SVG STYLES */
+.zone-label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  fill: #2a3538;
+}
+.dim-label {
+  font-family: 'JetBrains Mono', monospace;
+  fill: #4a9eff;
+  font-size: 10px;
+}
+.ceiling-label {
+  font-family: 'JetBrains Mono', monospace;
+  fill: #f0a040;
+  font-size: 9px;
+}
+.drag-handle {
+  fill: #4a9eff;
+  stroke: #1a1d1e;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 5px rgba(74,158,255,0.7));
+}
+.drag-handle.dragging { fill: #f0a040; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Venue Dimensions Tool</div>
+    <div class="header-actions">
+      <button id="btn-undo" title="Undo">↩ Undo</button>
+      <button id="btn-redo" title="Redo">↪ Redo</button>
+      <button id="tool-measure" title="Measure">📏 Measure</button>
+      <button id="measure-clear" title="Clear Measurements">✕ Clear</button>
+    </div>
+  </header>
+
+  <aside>
+    <div class="section">
+      <div class="section-title">Building Dimensions</div>
+      <div class="field">
+        <label>Width (ft)</label>
+        <input type="number" id="building-width" value="100" min="20" max="500" step="1">
+      </div>
+      <div class="field">
+        <label>Depth (ft)</label>
+        <input type="number" id="building-depth" value="150" min="20" max="500" step="1">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Stage</div>
+      <div class="field">
+        <label>Backstage (ft)</label>
+        <input type="number" id="backstage" value="20" min="0" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Stage Depth (ft)</label>
+        <input type="number" id="stage-depth" value="32" min="8" max="64" step="1">
+      </div>
+      <div class="field">
+        <label>FOH (ft)</label>
+        <input type="number" id="foh" value="20" min="0" max="100" step="1">
+      </div>
+    </div>
+  </aside>
+
+  <div class="canvas-area">
+    <div class="canvas-wrapper" id="canvas-wrapper">
+      <svg id="venue-canvas" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="canvas-overlay" id="overlay">
+      VIEW <span id="view-display">PLAN</span> · SCALE <span id="scale-display">1ft = 8px</span>
+    </div>
+    <div class="compass" id="compass">
+      <div class="arrow">▲</div>
+      <div>STAGE</div>
+    </div>
+    <div class="zoom-controls" id="zoom-controls">
+      <button onclick="zoom(-1)" title="Zoom out">−</button>
+      <button id="zoom-reset-btn" onclick="resetZoom()" title="Reset zoom">100%</button>
+      <button onclick="zoom(1)" title="Zoom in">+</button>
+    </div>
+    <div class="measure-controls" id="measure-controls">
+      <button id="tool-measure" onclick="setTool('measure')" title="Measure">📏 Measure</button>
+      <button id="measure-clear" onclick="clearMeasurements()" title="Clear" style="display: none;">Clear</button>
+    </div>
+    <div class="live-tip" id="live-tip" style="display: none;"></div>
+  </div>
+
+  <footer id="footer">
+    <div class="stat"><span>X: <strong id="stat-x">0.0</strong></span></div>
+    <div class="stat"><span>Y: <strong id="stat-y">0.0</strong></span></div>
+    <div class="stat"><span>SCALE: <strong id="stat-scale">1ft = 8px</strong></span></div>
+  </footer>
+
+  <script>
+    window.state = {
+      building: { w: 100, d: 150 },
+      backstage: 20,
+      stage: { w: 48, d: 32 },
+      foh: 20,
+      scale: 8,
+      zoomLevel: 1,
+      rooms: [],
+      walls: [],
+      thrust: { enabled: false, x: 0, y: 0, w: 0, depth: 0 },
+      bstage: { enabled: false, x: 0, y: 0, w: 0, d: 0 },
+      balcony: { enabled: false, xLeft: 0, xRight: 0, depth: 0 }
+    };
+
+    window.undoStack = [];
+    window.redoStack = [];
+    window.measurePoints = [];
+    window.measureActive = false;
+
+    function initCanvas() {
+      const svg = document.getElementById('venue-canvas');
+      const width = window.innerWidth - 280;
+      const height = window.innerHeight - 80;
+      svg.setAttribute('width', width);
+      svg.setAttribute('height', height);
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      svg.style.marginLeft = '280px';
+    }
+
+    function render() {
+      const svg = document.getElementById('venue-canvas');
+      const st = window.state;
+      const s = st.scale * st.zoomLevel;
+      const W = st.building.w;
+      const D = st.building.d;
+      
+      let content = '';
+      
+      // Grid
+      for (let x = 0; x <= W; x += 10) {
+        content += `<line class="grid-line" x1="${x * s}" y1="0" x2="${x * s}" y2="${D * s}" />`;
+      }
+      for (let y = 0; y <= D; y += 10) {
+        content += `<line class="grid-line" x1="0" y1="${y * s}" x2="${W * s}" y2="${y * s}" />`;
+      }
+      
+      // Building outline
+      content += `<rect x="0" y="0" width="${W * s}" height="${D * s}" fill="none" stroke="#4a9eff" stroke-width="2" />`;
+      
+      // Stage
+      const stageX = (W - st.stage.w) / 2;
+      const stageY = st.backstage;
+      content += `<rect class="stage-rect" x="${stageX * s}" y="${stageY * s}" width="${st.stage.w * s}" height="${st.stage.d * s}" />`;
+      content += `<text x="${(stageX + st.stage.w/2) * s}" y="${(stageY + st.stage.d/2) * s}" text-anchor="middle" dominant-baseline="middle" fill="#3dd68c" font-size="12" font-family="Inter" font-weight="600">STAGE</text>`;
+      
+      // Rooms
+      st.rooms.forEach(room => {
+        content += `<rect class="room-rect" x="${room.x * s}" y="${room.y * s}" width="${room.w * s}" height="${room.d * s}" />`;
+        content += `<text x="${(room.x + room.w/2) * s}" y="${(room.y + room.d/2) * s}" text-anchor="middle" dominant-baseline="middle" fill="#3dd68c" font-size="10" font-family="Inter">${room.label || 'Room'}</text>`;
+      });
+      
+      svg.innerHTML = content;
+    }
+
+    initCanvas();
+    render();
+
+    window.addEventListener('resize', () => {
+      initCanvas();
+      render();
+    });
+
+    // Input listeners
+    document.getElementById('building-width').addEventListener('change', (e) => {
+      window.state.building.w = parseFloat(e.target.value);
+      render();
+    });
+    document.getElementById('building-depth').addEventListener('change', (e) => {
+      window.state.building.d = parseFloat(e.target.value);
+      render();
+    });
+    document.getElementById('backstage').addEventListener('change', (e) => {
+      window.state.backstage = parseFloat(e.target.value);
+      render();
+    });
+    document.getElementById('stage-depth').addEventListener('change', (e) => {
+      window.state.stage.d = parseFloat(e.target.value);
+      render();
+    });
+    document.getElementById('foh').addEventListener('change', (e) => {
+      window.state.foh = parseFloat(e.target.value);
+      render();
+    });
+
+    console.log('[VenueDims] Standalone package loaded and ready');
+  </script>
+</body>
+</html>
